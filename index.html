@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Movie Tickets Booking System - Antigravity</title>
+    <!-- Favicon & Icons -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎟️</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="brand" onclick="switchMainView('movies-view')">
+                <i class="fa-solid fa-film brand-icon"></i>
+                <div class="brand-title">
+                    Online Movie Tickets Booking System <span class="brand-badge">Antigravity</span>
+                </div>
+            </div>
+
+            <nav class="nav-links">
+                <button class="nav-btn active" id="btn-nav-movies" onclick="switchMainView('movies-view')">
+                    <i class="fa-solid fa-clapperboard"></i> Movies
+                </button>
+                <button class="nav-btn" id="btn-nav-mybookings" onclick="switchMainView('mybookings-view')">
+                    <i class="fa-solid fa-ticket"></i> My Bookings
+                </button>
+                <button class="nav-btn" id="btn-nav-admin" onclick="switchMainView('admin-view')">
+                    <i class="fa-solid fa-gauge-high"></i> Admin Portal
+                </button>
+            </nav>
+
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="user-badge" onclick="openUserModal()" title="Switch or View Active User">
+                    <i class="fa-solid fa-user-circle" style="color: var(--accent);"></i>
+                    <span id="active-user-name">John Doe</span>
+                    <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; color: var(--text-muted);"></i>
+                </div>
+                <div id="db-status-badge" class="status-badge" onclick="openDbGuideModal()" title="Click to view Database Setup & Tables">
+                    <i class="fa-solid fa-database"></i> <span id="db-status-text">MySQL Checking...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-wrapper">
+
+        <!-- ================= VIEW 1: CUSTOMER MOVIES CATALOG ================= -->
+        <section id="movies-view" class="view-section">
+            <div class="hero-banner">
+                <h1>Book Your Favorite Movies Instantly</h1>
+                <p>Manage movies, theaters, and tickets booking. Customers can view available movies, check show timings, select seats, and book tickets seamlessly.</p>
+                
+                <!-- Filter & Search Controls -->
+                <div class="filter-bar">
+                    <div class="search-box">
+                        <span><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <input type="text" id="movie-search-input" placeholder="Search movies by title, language or actor..." onkeyup="filterMovies()">
+                    </div>
+                    <select id="genre-filter" class="filter-select" onchange="filterMovies()">
+                        <option value="">All Genres</option>
+                        <option value="Sci-Fi">Sci-Fi</option>
+                        <option value="Action">Action</option>
+                        <option value="Thriller">Thriller</option>
+                        <option value="Drama">Drama</option>
+                        <option value="Adventure">Adventure</option>
+                        <option value="Crime">Crime</option>
+                    </select>
+                    <select id="language-filter" class="filter-select" onchange="filterMovies()">
+                        <option value="">All Languages</option>
+                        <option value="English">English</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="Spanish">Spanish</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="section-title">
+                <h2>Now Showing in Cinemas</h2>
+                <span id="movies-count-badge" style="font-size: 0.9rem; color: var(--text-secondary); font-weight: normal;">Loading movies...</span>
+            </div>
+
+            <!-- Movies Grid -->
+            <div class="movies-grid" id="movies-grid">
+                <!-- Movie cards dynamically loaded here -->
+            </div>
+        </section>
+
+        <!-- ================= VIEW 2: CUSTOMER MY BOOKINGS ================= -->
+        <section id="mybookings-view" class="view-section" style="display: none;">
+            <div class="section-title">
+                <h2>My Bookings & Tickets</h2>
+                <button class="btn-sm btn-outline" onclick="loadMyBookings()">
+                    <i class="fa-solid fa-rotate-right"></i> Refresh
+                </button>
+            </div>
+            
+            <div id="my-bookings-container">
+                <!-- Customer bookings list dynamically loaded here -->
+            </div>
+        </section>
+
+        <!-- ================= VIEW 3: ADMIN MANAGEMENT PORTAL ================= -->
+        <section id="admin-view" class="view-section" style="display: none;">
+            <div class="section-title">
+                <h2>Admin Management Dashboard</h2>
+                <button class="btn-sm btn-outline" onclick="openDbGuideModal()">
+                    <i class="fa-solid fa-table"></i> View Database Schema
+                </button>
+            </div>
+
+            <!-- Admin Key Performance Metrics -->
+            <div class="admin-metrics">
+                <div class="metric-card">
+                    <div class="metric-icon"><i class="fa-solid fa-film"></i></div>
+                    <div class="metric-info">
+                        <h3 id="stat-movies">0</h3>
+                        <p>Total Movies (Table 2)</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon"><i class="fa-solid fa-masks-theater"></i></div>
+                    <div class="metric-info">
+                        <h3 id="stat-shows">0</h3>
+                        <p>Active Shows (Table 3)</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon"><i class="fa-solid fa-ticket"></i></div>
+                    <div class="metric-info">
+                        <h3 id="stat-bookings">0</h3>
+                        <p>Total Bookings (Table 4)</p>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+                    <div class="metric-info">
+                        <h3 id="stat-revenue">$0.00</h3>
+                        <p>Total Revenue</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Navigation Tabs -->
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active" id="tab-btn-movies" onclick="switchAdminTab('tab-movies')">
+                    <i class="fa-solid fa-film"></i> Manage Movies
+                </button>
+                <button class="admin-tab-btn" id="tab-btn-shows" onclick="switchAdminTab('tab-shows')">
+                    <i class="fa-solid fa-clock"></i> Manage Shows & Theaters
+                </button>
+                <button class="admin-tab-btn" id="tab-btn-bookings" onclick="switchAdminTab('tab-bookings')">
+                    <i class="fa-solid fa-receipt"></i> Manage All Bookings
+                </button>
+            </div>
+
+            <!-- Admin Subtab 1: Movies Management -->
+            <div id="tab-movies" class="admin-tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3>Movies Database (Table 2: <code>movies</code>)</h3>
+                    <button class="btn-sm btn-primary" onclick="openAddMovieModal()">
+                        <i class="fa-solid fa-plus"></i> Add New Movie
+                    </button>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="custom-table" id="admin-movies-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Genre</th>
+                                <th>Language</th>
+                                <th>Duration</th>
+                                <th>Release Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-movies-tbody">
+                            <!-- Populated via admin.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Admin Subtab 2: Shows Management -->
+            <div id="tab-shows" class="admin-tab-content" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3>Shows & Theaters Database (Table 3: <code>shows</code>)</h3>
+                    <button class="btn-sm btn-primary" onclick="openAddShowModal()">
+                        <i class="fa-solid fa-plus"></i> Add New Show
+                    </button>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="custom-table" id="admin-shows-table">
+                        <thead>
+                            <tr>
+                                <th>Show ID</th>
+                                <th>Movie</th>
+                                <th>Theatre Name</th>
+                                <th>Show Date</th>
+                                <th>Show Time</th>
+                                <th>Ticket Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-shows-tbody">
+                            <!-- Populated via admin.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Admin Subtab 3: Bookings Management -->
+            <div id="tab-bookings" class="admin-tab-content" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3>Customer Bookings Database (Table 4: <code>bookings</code>)</h3>
+                    <button class="btn-sm btn-outline" onclick="loadAdminBookings()">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh
+                    </button>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="custom-table" id="admin-bookings-table">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Customer</th>
+                                <th>Movie & Theatre</th>
+                                <th>Date & Time</th>
+                                <th>Seats</th>
+                                <th>Seat Numbers</th>
+                                <th>Total ($)</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-bookings-tbody">
+                            <!-- Populated via admin.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= MODAL: MOVIE DETAILS & SHOW SELECT ================= -->
+    <div class="modal-overlay" id="modal-movie-details">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-movie-title">Movie Title</h2>
+                <button class="btn-close" onclick="closeModal('modal-movie-details')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+                    <img id="modal-movie-poster" src="" alt="Poster" style="width: 150px; height: 210px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                    <div style="flex: 1; min-width: 250px;">
+                        <p id="modal-movie-desc" style="color: var(--text-secondary); margin-bottom: 1rem;"></p>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; font-size: 0.9rem;">
+                            <div><strong>Genre:</strong> <span id="modal-movie-genre"></span></div>
+                            <div><strong>Language:</strong> <span id="modal-movie-lang"></span></div>
+                            <div><strong>Duration:</strong> <span id="modal-movie-duration"></span> mins</div>
+                            <div><strong>Release Date:</strong> <span id="modal-movie-date"></span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
+
+                <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-calendar-check" style="color: var(--accent);"></i> Available Theatres & Show Timings</h3>
+                <div id="movie-shows-container" class="shows-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: INTERACTIVE SEAT SELECTION ================= -->
+    <div class="modal-overlay" id="modal-seat-selection">
+        <div class="modal-content" style="max-width: 750px;">
+            <div class="modal-header">
+                <div>
+                    <h2 id="seat-modal-title">Select Seats</h2>
+                    <p id="seat-modal-subtitle" style="font-size: 0.85rem; color: var(--text-secondary);"></p>
+                </div>
+                <button class="btn-close" onclick="closeModal('modal-seat-selection')">&times;</button>
+            </div>
+            <div class="modal-body">
+                
+                <!-- Cinema Screen Visualization -->
+                <div class="cinema-container">
+                    <div class="screen-indicator"></div>
+                    <div class="screen-text"><i class="fa-solid fa-arrow-up"></i> SCREEN THIS WAY <i class="fa-solid fa-arrow-up"></i></div>
+
+                    <!-- Seat Legend -->
+                    <div class="seat-legend">
+                        <div class="legend-item">
+                            <div class="legend-box legend-available"></div>
+                            <span>Available</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box legend-selected"></div>
+                            <span>Selected</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box legend-booked"></div>
+                            <span>Sold / Booked</span>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Seats Grid -->
+                    <div class="seats-grid" id="seats-grid-container">
+                        <!-- Generated by seats.js -->
+                    </div>
+                </div>
+
+                <!-- Live Booking Summary Bar -->
+                <div class="booking-summary-bar">
+                    <div class="summary-details">
+                        <h4>Selected: <span id="selected-seats-display" style="color: var(--accent-gold); font-weight: 700;">None</span></h4>
+                        <p>Total Seats: <span id="selected-count-display">0</span> | Price per seat: $<span id="seat-price-display">0.00</span></p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="text-align: right;">
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);">Total Amount</span>
+                            <h3 id="total-price-display" style="color: var(--accent); font-size: 1.4rem;">$0.00</h3>
+                        </div>
+                        <button class="btn-book" id="btn-confirm-booking" onclick="confirmTicketBooking()" style="width: auto; padding: 0.75rem 1.5rem;" disabled>
+                            <i class="fa-solid fa-check-circle"></i> Confirm & Book
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: TICKET CONFIRMATION RECEIPT ================= -->
+    <div class="modal-overlay" id="modal-ticket-receipt">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <h2>Booking Confirmed! 🎉</h2>
+                <button class="btn-close" onclick="closeModal('modal-ticket-receipt')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="ticket-receipt" id="printable-ticket">
+                    <div class="ticket-header">
+                        <div>
+                            <h3 id="receipt-movie-title">Movie Title</h3>
+                            <span style="font-size: 0.85rem; color: #64748b;" id="receipt-theatre">Theatre Name</span>
+                        </div>
+                        <span class="ticket-badge" id="receipt-status">CONFIRMED</span>
+                    </div>
+                    <div class="ticket-grid">
+                        <div>
+                            <p>Booking ID</p>
+                            <p id="receipt-booking-id">#BK-1001</p>
+                        </div>
+                        <div>
+                            <p>Customer Name</p>
+                            <p id="receipt-customer-name">John Doe</p>
+                        </div>
+                        <div>
+                            <p>Date & Time</p>
+                            <p id="receipt-datetime">2026-11-06 | 19:30</p>
+                        </div>
+                        <div>
+                            <p>Seats Selected (<span id="receipt-seat-count">2</span>)</p>
+                            <p id="receipt-seat-numbers" style="color: #dc2626;">A1, A2</p>
+                        </div>
+                    </div>
+                    <div class="ticket-footer">
+                        <div>
+                            <span style="font-size: 0.8rem; color: #64748b;">Total Amount Paid</span>
+                            <div class="ticket-total" id="receipt-total-amount">$500.00</div>
+                        </div>
+                        <div style="font-size: 2rem; color: #1e293b;">
+                            <i class="fa-solid fa-qrcode"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+                    <button class="btn-sm btn-outline" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> Print Ticket
+                    </button>
+                    <button class="btn-sm btn-primary" onclick="closeModal('modal-ticket-receipt'); switchMainView('mybookings-view');">
+                        <i class="fa-solid fa-ticket"></i> View in My Bookings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: ADD / EDIT MOVIE (ADMIN) ================= -->
+    <div class="modal-overlay" id="modal-add-movie">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="movie-form-modal-title">Add New Movie</h2>
+                <button class="btn-close" onclick="closeModal('modal-add-movie')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-movie" onsubmit="handleMovieSubmit(event)">
+                    <input type="hidden" id="movie-form-id">
+                    
+                    <div class="form-group">
+                        <label>Title (VARCHAR 150) *</label>
+                        <input type="text" id="movie-form-title" class="form-control" required placeholder="e.g. Inception">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Genre (VARCHAR 50) *</label>
+                            <input type="text" id="movie-form-genre" class="form-control" required placeholder="e.g. Sci-Fi / Action">
+                        </div>
+                        <div class="form-group">
+                            <label>Language (VARCHAR 30) *</label>
+                            <input type="text" id="movie-form-lang" class="form-control" required placeholder="e.g. English">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Duration (Minutes - INT) *</label>
+                            <input type="number" id="movie-form-duration" class="form-control" required min="1" placeholder="e.g. 148">
+                        </div>
+                        <div class="form-group">
+                            <label>Release Date (release_data DATE) *</label>
+                            <input type="date" id="movie-form-release" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Poster Image URL</label>
+                        <input type="url" id="movie-form-poster" class="form-control" placeholder="https://images.unsplash.com/...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="movie-form-desc" class="form-control" rows="3" placeholder="Movie synopsis or overview..."></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                        <button type="button" class="btn-sm btn-outline" onclick="closeModal('modal-add-movie')">Cancel</button>
+                        <button type="submit" class="btn-sm btn-primary">Save Movie</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: ADD / EDIT SHOW (ADMIN) ================= -->
+    <div class="modal-overlay" id="modal-add-show">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="show-form-modal-title">Add Show Schedule</h2>
+                <button class="btn-close" onclick="closeModal('modal-add-show')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-show" onsubmit="handleShowSubmit(event)">
+                    <input type="hidden" id="show-form-id">
+                    
+                    <div class="form-group">
+                        <label>Select Movie (movie_id INT FK) *</label>
+                        <select id="show-form-movie-id" class="form-control" required>
+                            <!-- Populated with movies -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Theatre Name (VARCHAR 100) *</label>
+                        <input type="text" id="show-form-theatre" class="form-control" required placeholder="e.g. PVR Cinemas - Screen 1">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Show Date (show_data DATE) *</label>
+                            <input type="date" id="show-form-date" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Show Time (show_time TIME) *</label>
+                            <input type="time" id="show-form-time" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ticket Price (DECIMAL 10,2) *</label>
+                        <input type="number" step="0.01" min="1" id="show-form-price" class="form-control" required placeholder="e.g. 250.00">
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                        <button type="button" class="btn-sm btn-outline" onclick="closeModal('modal-add-show')">Cancel</button>
+                        <button type="submit" class="btn-sm btn-primary">Save Show</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: USER PROFILE / SWITCHER ================= -->
+    <div class="modal-overlay" id="modal-user">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <h2>Active Customer Profile</h2>
+                <button class="btn-close" onclick="closeModal('modal-user')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Switch Active User</label>
+                    <select id="user-switch-select" class="form-control" onchange="changeActiveUser(this.value)">
+                        <!-- Populated with users -->
+                    </select>
+                </div>
+
+                <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
+
+                <h4 style="margin-bottom: 0.75rem;">Or Register New Customer</h4>
+                <form id="form-register-user" onsubmit="handleUserRegister(event)">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="reg-name" class="form-control" required placeholder="e.g. Alex Johnson">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address *</label>
+                        <input type="email" id="reg-email" class="form-control" required placeholder="e.g. alex@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="text" id="reg-phone" class="form-control" placeholder="e.g. 9876543210">
+                    </div>
+                    <button type="submit" class="btn-sm btn-primary" style="width: 100%; padding: 0.7rem;">Register & Sign In</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: DATABASE SCHEMA GUIDE ================= -->
+    <div class="modal-overlay" id="modal-db-guide">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-database" style="color: var(--accent);"></i> MySQL Database Tables Structure</h2>
+                <button class="btn-close" onclick="closeModal('modal-db-guide')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    Here is the exact schema and tables implemented as requested for this project:
+                </p>
+
+                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.85rem; line-height: 1.8; margin-bottom: 1.5rem;">
+                    <strong>Table 1: users</strong><br>
+                    <code>user_id INT PK AUTO_INCREMENT, full_name VARCHAR(100), email VARCHAR(100) UNIQUE, phone VARCHAR(20), role VARCHAR(20)</code><br><br>
+
+                    <strong>Table 2: movies</strong><br>
+                    <code>movie_id INT PK, title VARCHAR(150), genre VARCHAR(50), language VARCHAR(30), duration INT, release_data DATE</code><br><br>
+
+                    <strong>Table 3: shows</strong><br>
+                    <code>show_id INT PK, movie_id INT FK, theatre_name VARCHAR(100), show_data DATE, show_time TIME, ticket_price DECIMAL(10,2)</code><br><br>
+
+                    <strong>Table 4: bookings</strong><br>
+                    <code>booking_id INT PK, User_id INT FK, show_id INT FK, seats INT, total_amount DECIMAL(10,2), booking_status VARCHAR(30)</code>
+                </div>
+
+                <h4><i class="fa-solid fa-terminal" style="color: var(--accent-gold);"></i> How to Import in MySQL Workbench:</h4>
+                <ol style="margin-left: 1.5rem; color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem; line-height: 1.6;">
+                    <li>Open <strong>MySQL Workbench</strong> and connect to your local MySQL connection.</li>
+                    <li>Go to <strong>File &gt; Open SQL Script...</strong></li>
+                    <li>Select <code>database/schema.sql</code> and click <strong>Execute (Lightning Bolt icon)</strong>.</li>
+                    <li>Next, open <code>database/seed.sql</code> and execute it to load sample movies and shows.</li>
+                    <li>Update your MySQL password in the <code>.env</code> file in VS Code.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i id="toast-icon" class="fa-solid fa-circle-check"></i>
+        <span id="toast-message">Notification message</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p><strong>Online Movie Tickets Booking System - Antigravity</strong> &copy; 2026. Built with HTML, CSS, JavaScript, Express.js & MySQL.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/client-db.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/seats.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
